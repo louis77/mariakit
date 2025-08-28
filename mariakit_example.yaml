@@ -1,0 +1,13 @@
+# Example configuration for custom JSON type mappings
+json_mappings:
+  users.preferences:
+    type: UserPreferences
+    import: github.com/mycompany/models
+  orders.metadata:
+    type: OrderMetadata
+    import: github.com/mycompany/models
+  products.specifications:
+    type: types.JSON[ProductSpecs]
+    import: github.com/mycompany/product
+  cache.data:
+    type: map[string]interface{}
