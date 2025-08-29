@@ -7,16 +7,18 @@ MariaKit handles complex MariaDB features including JSON columns with custom typ
 ## Features
 
 - 🔍 Automatically inspects MariaDB schema using information_schema
-- 📝 Generates type-safe Go constants for all column names
+- 📝 Generates type-safe Go constants for all column names with `_Name` suffix
+- 🎯 Generates Go type aliases for every table column 
 - 🏗️ Creates Go structs with proper type mappings from MariaDB to Go
 - 🔢 Generates constants for all enum values found in the database
-- 🎯 Supports selective generation (constants, structs, or enums only)
+- ✅ Proper TINYINT(1) to boolean mapping (MariaDB's actual boolean type)
+- 🎯 Supports selective generation (constants, structs, types, or enums only)
 - 📁 Clean, organized output with automatic Go formatting
 - 🛠️ Standalone CLI tool with no external dependencies
 - 🎨 Custom JSON column type mapping with YAML configuration
 - 🔧 Automatic detection of JSON columns via `json_valid()` constraints
 - 📦 Includes specialized MariaDB types (JSON, Point, LineString, StringArray)
-- 🏷️ Preserves database column comments in generated structs
+- 🏷️ Preserves database column comments in generated structs and type aliases
 - 🔗 Handles primary key relationships and nullable types
 
 MariaKit let's you write your SQL queries in a type-safe way, with automatic type mapping and enum value handling, without imposing any ORM or dependencies to your Go application.
@@ -272,6 +274,14 @@ mariakit \
   -output="./generated"
 ```
 
+##### Column Type Aliases Only
+```bash
+mariakit \
+  -conn="user:password@tcp(localhost:3306)/database" \
+  -type=types \
+  -output="./generated"
+```
+
 ##### Enum Constants Only
 ```bash
 mariakit \
@@ -311,6 +321,7 @@ func main() {
     // Access generated code
     columnConstants := files["column_constants.go"]
     structs := files["structs.go"]
+    columnTypes := files["column_types.go"]
     enumConstants := files["enum_constants.go"]
 
     // Or generate specific types
@@ -426,7 +437,7 @@ type Users struct {
 |------|-------------|---------|
 | `-conn` | MariaDB connection string (required) | "" |
 | `-output` | Output directory for generated files | "./generated" |
-| `-type` | Type of code to generate: `all`, `constants`, `structs`, `enums` | "all" |
+| `-type` | Type of code to generate: `all`, `constants`, `structs`, `types`, `enums` | "all" |
 | `-config` | Path to configuration file | "mariakit.yaml" |
 | `-help` | Show help message | false |
 
@@ -447,14 +458,14 @@ Examples:
 MariaKit generates clean, organized Go code split into separate files for better maintainability. When generating all code types, the following files are created:
 
 ### `column_constants.go`
-Contains constants for all column names:
+Contains constants for all column names with `_Name` suffix:
 ```go
 // Users table column constants
 const (
-    Users_ID = "id"
-    Users_Name = "name"
-    Users_Email = "email"
-    Users_CreatedAt = "created_at"
+    Users_Id_Name = "id"
+    Users_Name_Name = "name"
+    Users_Email_Name = "email"
+    Users_CreatedAt_Name = "created_at"
 )
 ```
 
@@ -468,6 +479,16 @@ type Users struct {
     Email     string    `db:"email"`
     CreatedAt time.Time `db:"created_at"`
 }
+```
+
+### `column_types.go`
+Contains Go type aliases for every table column:
+```go
+// Users table column type aliases
+type Users_Id = int32
+type Users_Name = string
+type Users_Email = string
+type Users_CreatedAt = time.Time
 ```
 
 ### `enum_constants.go`
@@ -494,7 +515,7 @@ The generator maps MariaDB types to appropriate Go types:
 | DOUBLE, DECIMAL | float64 | sql.NullFloat64 |
 | VARCHAR, TEXT | string | sql.NullString |
 | DATE, DATETIME, TIMESTAMP | time.Time | sql.NullTime |
-| BOOLEAN, BIT | bool | sql.NullBool |
+| BOOLEAN, BIT, TINYINT(1) | bool | sql.NullBool |
 | BLOB, BINARY | []byte | []byte |
 | ENUM | string | sql.NullString |
 | LONGTEXT with json_valid() | types.JSON[any] | types.JSON[any] |
@@ -526,9 +547,6 @@ mariakit \
 mariakit \
   -conn="$DATABASE_URL" \
   -output="./generated"
-
-# Format the generated code
-go fmt ./generated/...
 ```
 
 ## Error Handling
@@ -595,4 +613,4 @@ All errors are logged with descriptive messages to help with troubleshooting.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

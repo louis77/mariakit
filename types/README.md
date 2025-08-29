@@ -1,6 +1,6 @@
 # MariaDB Types Package
 
-This package provides common database types used with MariaDB/MySQL databases.
+This package provides common database types used with MariaDB databases.
 
 ## Types
 
@@ -44,6 +44,24 @@ type LineString struct {
 }
 ```
 
+### Vector[T]
+
+A generic vector type for storing embeddings and multi-dimensional numerical arrays, corresponding to MariaDB's VECTOR datatype.
+
+```go
+type Vector[T VectorElement] struct {
+    Data      []T
+    Dimension int
+    Valid     bool
+}
+```
+
+Supported element types:
+- `float32` (for MariaDB VECTOR with FLOAT elements)
+- `float64` (for MariaDB VECTOR with DOUBLE elements)  
+- `int32` (for MariaDB VECTOR with INT elements)
+- `int64` (for MariaDB VECTOR with BIGINT elements)
+
 ## Usage
 
 ```go
@@ -66,6 +84,20 @@ type Location struct {
     ID     int
     Point  types.Point      `db:"location"`
     Route  types.LineString `db:"route"`
+}
+
+// Vector types for embeddings
+type Document struct {
+    ID        int
+    Content   string
+    Embedding types.Vector[float32] `db:"embedding"` // For VECTOR(128,FLOAT)
+}
+
+type AIModel struct {
+    ID         int
+    Name       string
+    Weights    types.Vector[float64] `db:"weights"`    // For VECTOR(256,DOUBLE)
+    Parameters types.Vector[int32]   `db:"parameters"` // For VECTOR(64,INT)
 }
 ```
 
